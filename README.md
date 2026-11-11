@@ -19,8 +19,6 @@ Needs `ffmpeg`. Writes `overview.png` and `figures/`.
 
 ## Figures
 
-![overview](overview.png)
-
 **Planner.** Start groups (blue) assigned to goal cells (orange); lines are the A* paths around the walls.
 
 ![planner](figures/planner.png)
