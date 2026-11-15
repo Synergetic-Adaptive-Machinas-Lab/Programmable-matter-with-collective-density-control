@@ -4,7 +4,7 @@ from scipy.spatial import cKDTree
 SCALE_EXTERNAL = 37.61814936649954
 SCALE_INTERNAL = 4.237444959265931e-07
 C_EFF = 0.00028
-MASS_DISK = 2.4e-7
+MASS_DISK = 2.4e-7  # used only by phys_step_newtonian (comparison model)
 DT = 0.001
 
 PAIR_A = 9318.0
@@ -89,6 +89,20 @@ def pairwise_force(disk_x, disk_y, rng):
     return Fx, Fy
 
 def phys_step(disk_x, disk_y, disk_vx, disk_vy, active_x, active_y, rng, dt=DT):
+    """Overdamped (quasi-static) update, eqs. S16-S17: v = (a_ext F_ext + a_int F_int) / C_eff.
+    Primary simulation model. disk_vx/disk_vy are accepted for API compatibility and ignored."""
+
+    Fx_mag, Fy_mag = magnetic_force(disk_x, disk_y, active_x, active_y)
+    Fx_p, Fy_p = pairwise_force(disk_x, disk_y, rng)
+
+    nvx = (SCALE_EXTERNAL * Fx_mag + SCALE_INTERNAL * Fx_p) / C_EFF
+    nvy = (SCALE_EXTERNAL * Fy_mag + SCALE_INTERNAL * Fy_p) / C_EFF
+    nx = disk_x + nvx * dt / MM_TO_M
+    ny = disk_y + nvy * dt / MM_TO_M
+    return nx, ny, nvx, nvy
+
+def phys_step_newtonian(disk_x, disk_y, disk_vx, disk_vy, active_x, active_y, rng, dt=DT):
+    """Full Newtonian (F = ma) update, eq. S18. Kept for comparison only."""
 
     Fx_mag, Fy_mag = magnetic_force(disk_x, disk_y, active_x, active_y)
     Fx_p, Fy_p = pairwise_force(disk_x, disk_y, rng)

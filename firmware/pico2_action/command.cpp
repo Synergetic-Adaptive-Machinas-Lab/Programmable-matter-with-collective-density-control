@@ -136,8 +136,9 @@ void actionX(Adafruit_PWMServoDriver* boards0[NUM_BOARDS], Adafruit_PWMServoDriv
           off[left]  = 4095 - pwm;
           off[right] = 4095;
         } else {
-          off[left]  = 0;
-          off[right] = 0;
+          // brake (IN1=1, IN2=1): defined zero-field state, Table S3
+          off[left]  = 4095;
+          off[right] = 4095;
         }
       }
 

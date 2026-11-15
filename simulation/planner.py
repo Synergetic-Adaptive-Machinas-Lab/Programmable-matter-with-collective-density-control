@@ -4,7 +4,7 @@ import math
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from hexgrid import ROWS, COLS, cell_key, hex_dist, hex_xy, neighbors
+from hexgrid import ROWS, COLS, cell_key, hex_dist, neighbors
 
 def astar(sr, sc, gr, gc, walls=frozenset()):
 
@@ -66,24 +66,6 @@ def path_len(path):
         d += hex_dist(path[i - 1][0], path[i - 1][1], path[i][0], path[i][1])
     return d
 
-def _farthest_point_indices(cells, n_extra):
-
-    xy = np.array([hex_xy(r, c) for r, c in cells])
-    n = len(cells)
-    if n_extra <= 0:
-        return []
-
-    centroid = xy.mean(axis=0)
-    first = int(np.argmax(np.sum((xy - centroid) ** 2, axis=1)))
-    order = [first]
-    min_d2 = np.sum((xy - xy[first]) ** 2, axis=1)
-    for _ in range(n - 1):
-        nxt = int(np.argmax(min_d2))
-        order.append(nxt)
-        d2 = np.sum((xy - xy[nxt]) ** 2, axis=1)
-        min_d2 = np.minimum(min_d2, d2)
-    return [order[i % n] for i in range(n_extra)]
-
 def plan_unified(starts, goals, cost_mode="astar", walls=frozenset()):
 
     nS, nG = len(starts), len(goals)
@@ -96,17 +78,8 @@ def plan_unified(starts, goals, cost_mode="astar", walls=frozenset()):
             path_cache[key] = astar(starts[si][0], starts[si][1], goals[gi][0], goals[gi][1], walls)
         return path_cache[key]
 
-    if nS < nG:
-        extra = _farthest_point_indices(starts, k - nS)
-        source_slots = list(range(nS)) + extra
-        goal_slots = list(range(k))
-    elif nS > nG:
-        extra = _farthest_point_indices(goals, k - nG)
-        source_slots = list(range(k))
-        goal_slots = list(range(nG)) + extra
-    else:
-        source_slots = list(range(k))
-        goal_slots = list(range(k))
+    source_slots = [(i % nS) if nS < nG else i for i in range(k)]
+    goal_slots = [(j % nG) if nS > nG else j for j in range(k)]
 
     if cost_mode == "astar":
         for si in range(nS):
